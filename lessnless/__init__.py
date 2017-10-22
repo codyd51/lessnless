@@ -29,6 +29,8 @@ class Song(object):
             seg = SongSegment(possible_chords=chords)
             chords.remove(seg.chord)
 
+            self.segments[Song.SEGMENT_ORDER[i]] = seg
+            print('{}: {}'.format(Song.SEGMENT_ORDER[i], seg))
 
         song_dump = json.dumps(self, default=dumper, indent=2)
         timestamp = int(time.time())
@@ -159,33 +161,32 @@ class SongSegment(object):
         return random.choice(possible_chords)
 
     def play(self):
-        if len(self.notes) == 4:
-            for i in range(4):
-                self.play_bar(self.chord, self.notes)
-        elif len(self.notes) == 8:
-            for i in range(2):
-                self.play_bar(self.chord, self.notes[0:4])
-                self.play_bar(self.chord, self.notes[4:8])
-        elif len(self.notes) == 16:
-            for i in range(1):
-                self.play_bar(self.chord, self.notes[0:4])
-                self.play_bar(self.chord, self.notes[4:8])
-                self.play_bar(self.chord, self.notes[8:12])
-                self.play_bar(self.chord, self.notes[12:16])
-
-    def play_bar(self, chord, notes):
-        beat_time = 0.225
-        bar_time = beat_time * len(notes)
-
-        fluidsynth.set_instrument(1, 5)
-        fluidsynth.play_NoteContainer(chord)
+        beat_time = 0.25
+        bar_time = beat_time * 16
 
         fluidsynth.set_instrument(1, 0)
-        for i in range(4):
-            fluidsynth.play_Note(notes[i])
+        fluidsynth.play_NoteContainer(self.chord)
+
+        note_idx = 0
+        current_note = self.melody.notes[note_idx]
+        fluidsynth.play_Note(current_note.note)
+        note_end_beat_idx = current_note.beat_count
+
+        for beat in range(16):
+            if beat % 4 == 0:
+                fluidsynth.stop_NoteContainer(self.chord)
+                fluidsynth.set_instrument(1, 0)
+                fluidsynth.play_NoteContainer(self.chord)
+
+            if beat == note_end_beat_idx:
+                fluidsynth.stop_Note(current_note.note)
+                note_idx += 1
+                current_note = self.melody.notes[note_idx]
+                note_end_beat_idx += current_note.beat_count
+                fluidsynth.set_instrument(1, 0)
+                fluidsynth.play_Note(current_note.note)
+
             time.sleep(beat_time)
-            fluidsynth.stop_Note(notes[i])
-        fluidsynth.stop_NoteContainer(chord)
 
     def __repr__(self):
         return '<SongSegment chord: {} notes: {}>'.format(self.chord, self.melody.notes)
