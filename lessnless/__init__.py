@@ -10,36 +10,36 @@ from pprint import pprint
 
 fluidsynth.init('../Nice-Keys-Ultimate-V2.3.sf2')
 
-chords = [
-    NoteContainer(['C-2',
-                   'E-2',
-                   'G-2']),
 
-    NoteContainer(['F-2',
-                   'A-2',
-                   'C-3']),
+class Song(object):
 
-    NoteContainer(['G-2',
-                   'B-2',
-                   'D-3']),
 
-    NoteContainer(['A-2',
-                   'C-3',
-                   'E-3']),
-]
+        chords = Song.get_c_chords()
+        for i in range(4):
+            seg = SongSegment(possible_chords=chords)
+            chords.remove(seg.chord)
 
-def get_chord_set():
-    usable_chords = chords
-    chord_set = []
-    for i in range(3):
-        chord = random.choice(usable_chords)
-        chord_set.append(chord)
-        usable_chords.remove(chord)
-    return chord_set
 
-# chorys has dynamic range of notes,
-# intro simple, less notes
-# 8 bars for each section: intro, verse, chorus, bridge
+    @classmethod
+    def get_c_chords(cls):
+        chords = [
+            NoteContainer(['C-2',
+                           'E-2',
+                           'G-2']),
+
+            NoteContainer(['F-2',
+                           'A-2',
+                           'C-3']),
+
+            NoteContainer(['G-2',
+                           'B-2',
+                           'D-3']),
+
+            NoteContainer(['A-2',
+                           'C-3',
+                           'E-3']),
+        ]
+        return chords
 
 class SongSegment(object):
     def __init__(self):
@@ -105,25 +105,6 @@ class SongSegment(object):
         return '<SongSegment chord: {} notes: {}>'.format(self.chord, self.notes)
 
 
-class Song(object):
-    SEGMENT_ORDER = ['intro',
-                     'verse',
-                     'chorus',
-                     'bridge']
-    def __init__(self):
-        self.intro = SongSegment()
-        self.verse = SongSegment()
-        self.chorus = SongSegment()
-        self.bridge = SongSegment()
-
-        self.segments = [self.intro,
-                         self.verse,
-                         self.chorus,
-                         self.bridge,
-                        ]
-
-        for i, seg in enumerate(self.segments):
-            print('{}: {}'.format(Song.SEGMENT_ORDER[i], seg))
 
     def play(self):
         # intro, verse, chorus, verse, chorus, bridge, chorus
