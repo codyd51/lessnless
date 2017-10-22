@@ -30,6 +30,13 @@ class Song(object):
             chords.remove(seg.chord)
 
 
+        song_dump = json.dumps(self, default=dumper, indent=2)
+        timestamp = int(time.time())
+        filename = 'lessnless-{}.json'.format(timestamp)
+        with open(filename, 'w') as song_file:
+            song_file.write(song_dump)
+            print('Dumped song to {}'.format(filename))
+
     @classmethod
     def get_c_chords(cls):
         chords = [
@@ -184,14 +191,24 @@ class SongSegment(object):
         return '<SongSegment chord: {} notes: {}>'.format(self.chord, self.melody.notes)
 
 
+def dumper(obj):
+    try:
+        return obj.toJSON()
+    except:
+        return obj.__dict__
 
-    def play(self):
-        # intro, verse, chorus, verse, chorus, bridge, chorus
-        play_pattern = [0, 1, 2, 1, 2, 3, 2]
-        for segment_index in play_pattern:
-            print('Playing {} segment'.format(Song.SEGMENT_ORDER[segment_index]))
-            self.segments[segment_index].play()
 
-s = Song()
-s.play()
+list = [
+    1508651627,
+    1508651653,
+    1508651704,
+    1508651730,
+]
+
+for timestamp in list:
+    name = 'lessnless-{}.json'.format(timestamp)
+    #s = Song.inflate_song(name)
+    s = Song()
+    s.play()
+    break
 
