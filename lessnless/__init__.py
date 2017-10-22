@@ -5,6 +5,8 @@ import mingus.core.scales as scales
 
 import time
 import random
+import json
+import threading
 
 from pprint import pprint
 
@@ -12,7 +14,15 @@ fluidsynth.init('../Nice-Keys-Ultimate-V2.3.sf2')
 
 
 class Song(object):
+    SEGMENT_ORDER = ['intro',
+                     'verse',
+                     'chorus',
+                     'bridge']
 
+    def __init__(self, generate=True):
+        self.segments = {}
+        if not generate:
+            return
 
         chords = Song.get_c_chords()
         for i in range(4):
@@ -71,6 +81,12 @@ class SongSegment(object):
             current_note = scale_notes[current_scale_idx]
 
         return notes
+
+
+class SongSegment(object):
+    def __init__(self, generate=True, possible_chords=Song.get_c_chords()):
+        if not generate:
+            return
 
     def play(self):
         if len(self.notes) == 4:
