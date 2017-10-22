@@ -51,34 +51,90 @@ class Song(object):
         ]
         return chords
 
-class SongSegment(object):
-    def __init__(self):
-        self.chord = self.get_chord()
-        possible_note_counts = [4, 8, 16]
-        note_count = random.choice(possible_note_counts)
-        self.notes = self.get_notes(note_count, self.chord)
+    def play(self):
+        intro = self.segments['intro']
+        fluidsynth.play_NoteContainer(intro.chord)
+        time.sleep(0.25 * 8)
+        fluidsynth.stop_NoteContainer(intro.chord)
+        # intro, verse, chorus, verse, chorus, bridge, chorus
+        play_pattern = [0, 1, 2, 1, 2, 3, 2]
+        for segment_index in play_pattern:
+            print('Playing {} segment'.format(Song.SEGMENT_ORDER[segment_index]))
+            self.segments[Song.SEGMENT_ORDER[segment_index]].play()
 
-    def get_chord(self):
-        return random.choice(chords)
+        outro = self.segments['chorus']
+        for i in range(3):
+            fluidsynth.play_NoteContainer(outro.chord)
+            time.sleep(0.25 * 8)
+            fluidsynth.stop_NoteContainer(outro.chord)
 
-    def get_notes(self, count, chord):
+    @classmethod
+    def inflate_song(cls, filename):
+        s = Song(generate=False)
+        with open(filename, 'r') as song_file:
+            data = json.loads(song_file.read())
+            pprint(data)
+            for segment_name, segment_data in data['segments'].iteritems():
+                print('segment_name {}'.format(segment_name))
+                segment_idx = cls.SEGMENT_ORDER.index(segment_name)
+
+                print('inflating {} from {}'.format(segment_name, segment_data))
+                s.segments[Song.SEGMENT_ORDER[segment_idx]] = cls.inflate_segment(segment_data)
+        return s
+
+    @classmethod
+    def inflate_segment(cls, segment_data):
+        s = SongSegment(generate=False)
+        s.chord = None
+        s.notes = []
+        for note_data in segment_data['notes']:
+            note = Note(name=str(note_data['name']), octave=int(note_data['octave']))
+            s.notes.append(note)
+        chord_notes = []
+        for note_data in segment_data['chord']['notes']:
+            note = Note(name=str(note_data['name']), octave=int(note_data['octave']))
+            chord_notes.append(note)
+        s.chord = NoteContainer(chord_notes)
+        return s
+
+
+class MelodyNote(object):
+    def __init__(self, note, beat_count):
+        self.note = note
+        self.beat_count = beat_count
+
+    def __repr__(self):
+        return '<{}, {} beats>'.format(self.note, self.beat_count)
+
+
+class Melody(object):
+    def __init__(self, chord):
+        self.notes = self.get_notes(16, chord)
+
+    def get_notes(self, beat_count, chord):
         notes = []
         copy_note = random.choice(chord.notes)
         starting_note = Note(name=copy_note.name, octave=copy_note.octave + 2)
 
         scale_notes = scales.Major('C').ascending()
         current_scale_idx = scale_notes.index(starting_note.name)
-        current_note = starting_note
+        current_raw_note = starting_note
 
-        for i in range(count):
-            notes.append(Note(current_note))
+        i = 0
+        while i < beat_count:
+            note_lengths = range(1, 4)
+            current_note_length = random.choice(note_lengths)
+            notes.append(MelodyNote(current_raw_note, current_note_length))
+
+            # increment i by the number of beats used by this note
+            i += current_note_length
 
             # go up or down on the scale?
             off = 1
             if random.choice([True, False]):
                 off = -1
             current_scale_idx = (current_scale_idx + off) % len(scale_notes)
-            current_note = scale_notes[current_scale_idx]
+            current_raw_note = Note(name=scale_notes[current_scale_idx], octave=current_raw_note.octave)
 
         return notes
 
@@ -87,6 +143,13 @@ class SongSegment(object):
     def __init__(self, generate=True, possible_chords=Song.get_c_chords()):
         if not generate:
             return
+
+        self.chord = self.get_chord(possible_chords)
+        self.notes = None
+        self.melody = Melody(self.chord)
+
+    def get_chord(self, possible_chords):
+        return random.choice(possible_chords)
 
     def play(self):
         if len(self.notes) == 4:
@@ -118,7 +181,7 @@ class SongSegment(object):
         fluidsynth.stop_NoteContainer(chord)
 
     def __repr__(self):
-        return '<SongSegment chord: {} notes: {}>'.format(self.chord, self.notes)
+        return '<SongSegment chord: {} notes: {}>'.format(self.chord, self.melody.notes)
 
 
 
