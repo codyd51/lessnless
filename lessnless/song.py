@@ -46,6 +46,12 @@ class Song(object):
         ]
         return chords
 
+    @classmethod
+    def get_c_scale(cls):
+        scale_notes = scales.Major('C').ascending()
+        return scale_notes
+
+
 from song_segment import SongSegment
 
 
