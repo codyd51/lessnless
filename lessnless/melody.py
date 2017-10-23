@@ -72,3 +72,23 @@ class StepProgression(Progression):
             note_length = self._get_next_note_length()
 
         return notes
+
+
+
+class MelodyNote(object):
+    def __init__(self, note, beat_count):
+        self.note = note
+        self.beat_count = beat_count
+
+    def __repr__(self):
+        return '<{}, {} beats>'.format(self.note, self.beat_count)
+
+
+class Melody(object):
+    def __init__(self, beats, chord):
+        self.notes = self.get_notes(beats, chord)
+
+    def get_notes(self, beat_count, chord):
+        # TODO(PT): randomly choose between StepProgression and something else, IntervalProgression
+        strategy = StepProgression(beat_count, chord)
+        return strategy.generate_notes()
