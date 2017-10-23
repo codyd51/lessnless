@@ -1,0 +1,9 @@
+*.json
+bin/
+include/
+.idea/
+*.egg_info
+*.pyc
+.Python
+lib/
+
