@@ -7,20 +7,22 @@ import time
 
 
 class SongSegment(object):
-    def __init__(self, generate=True, possible_chords=Song.get_c_chords()):
+    def __init__(self, generate=True, possible_chords=Song.get_c_chords(), beat_count=16):
         if not generate:
             return
 
         self.chord = self.get_chord(possible_chords)
+        self.beat_count = beat_count
         self.notes = None
-        self.melody = Melody(self.chord)
+        self.melody = Melody(self.beat_count, self.chord)
 
-    def get_chord(self, possible_chords):
+    @staticmethod
+    def get_chord(possible_chords):
         return random.choice(possible_chords)
 
     def play(self):
         beat_time = 0.25
-        bar_time = beat_time * 16
+        bar_time = beat_time * self.beat_count
 
         fluidsynth.set_instrument(1, 0)
         fluidsynth.play_NoteContainer(self.chord)
@@ -30,7 +32,7 @@ class SongSegment(object):
         fluidsynth.play_Note(current_note.note)
         note_end_beat_idx = current_note.beat_count
 
-        for beat in range(16):
+        for beat in range(self.beat_count):
             if beat % 4 == 0:
                 fluidsynth.stop_NoteContainer(self.chord)
                 fluidsynth.set_instrument(1, 0)
