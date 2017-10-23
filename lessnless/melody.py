@@ -48,20 +48,27 @@ class StepProgression(Progression):
         current_scale_idx = scale_notes.index(starting_note.name)
         current_raw_note = starting_note
 
-        i = 0
-        while i < beat_count:
-            note_lengths = range(1, 4)
-            current_note_length = random.choice(note_lengths)
-            notes.append(MelodyNote(current_raw_note, current_note_length))
+        note_length = self._get_next_note_length()
+        while note_length is not 0:
+            notes.append(MelodyNote(current_raw_note, note_length))
 
-            # increment i by the number of beats used by this note
-            i += current_note_length
-
+            # choose step
+            step = random.choice([1, 2])
             # go up or down on the scale?
-            off = 1
             if random.choice([True, False]):
-                off = -1
-            current_scale_idx = (current_scale_idx + off) % len(scale_notes)
+                step = -step
+
+            # check if we're going to change octaves
+            octave_change = 0
+            if current_scale_idx + step >= scale_notes:
+                octave_change = 1
+            elif current_scale_idx + step < 0:
+                octave_change = -1
+            current_raw_note.octave += octave_change
+
+            current_scale_idx = (current_scale_idx + step) % len(scale_notes)
             current_raw_note = Note(name=scale_notes[current_scale_idx], octave=current_raw_note.octave)
+
+            note_length = self._get_next_note_length()
 
         return notes
