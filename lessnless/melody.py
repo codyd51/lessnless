@@ -178,19 +178,17 @@ class StepProgression(Progression):
             current_scale_idx = (current_scale_idx + step) % len(scale_notes)
             current_raw_note = Note(name=scale_notes[current_scale_idx], octave=current_raw_note.octave)
 
-            note_length = self._get_next_note_length()
-
         return notes
 
 
-
 class MelodyNote(object):
-    def __init__(self, note, beat_count):
+    def __init__(self, note, eighth_count, start_eighth):
         self.note = note
-        self.beat_count = beat_count
+        self.eighth_count = eighth_count
+        self.start_eighth = start_eighth
 
     def __repr__(self):
-        return '<{}, {} beats>'.format(self.note, self.beat_count)
+        return '<{}, {} eighths @ {}>'.format(self.note, self.eighth_count, self.start_eighth)
 
 
 class Melody(object):
@@ -198,6 +196,20 @@ class Melody(object):
         self.notes = self.get_notes(beats, chord)
 
     def get_notes(self, beat_count, chord):
+        # randomly choose cadence strategy
+        strategies = [CadenceStrategyQuickNotes,
+                      CadenceStrategyQuarterHalf,
+                      ]
+        strategy = random.choice(strategies)
+        print('melody chose {} cadence strategy'.format(strategy))
+        cadence = strategy(beat_count)
+        timings = cadence.generate_timings()
+
         # TODO(PT): randomly choose between StepProgression and something else, IntervalProgression
-        strategy = StepProgression(beat_count, chord)
-        return strategy.generate_notes()
+        progression = StepProgression(len(timings), chord)
+        notes = progression.generate_notes()
+
+        self.notes = []
+        for note, timing in zip(notes, timings):
+            self.notes.append(MelodyNote(note, timing.eighth_count, timing.start_time))
+        return self.notes
