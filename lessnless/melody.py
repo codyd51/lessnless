@@ -172,6 +172,8 @@ class StepProgression(Progression):
             elif current_scale_idx + step < 0:
                 octave_change = -1
             current_raw_note.octave += octave_change
+            # don't go too low
+            current_raw_note.octave = max(4, current_raw_note.octave)
 
             current_scale_idx = (current_scale_idx + step) % len(scale_notes)
             current_raw_note = Note(name=scale_notes[current_scale_idx], octave=current_raw_note.octave)
